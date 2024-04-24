@@ -1,13 +1,16 @@
 import React, { useEffect, useState } from "react";
+import { ethers } from "ethers";
 
 function App() {
-  const [data, setData] = useState([]);
+  const [requests, setRequests] = useState([]);
+  const [results, setResults] = useState([]);
   const [llama2Count, setLlama2Count] = useState(0);
   const [stableDiffusionCount, setStableDiffusionCount] = useState(0);
   const [llama2Percentage, setLlama2Percentage] = useState(0);
   const [stableDiffusionPercentage, setStableDiffusionPercentage] = useState(0);
   const [promptCount, setPromptCount] = useState(0);
   const [simplePromptCount, setSimplePromptCount] = useState(0);
+  const [inputOutputs, setInputOutputs] = useState([]);
 
   let llama2ModelId = "11";
   let stableDiffusionModelId = "50";
@@ -16,7 +19,8 @@ function App() {
 
   useEffect(() => {
     const fetchData = async () => {
-      let allData = [];
+      let allRequests = [];
+      let allResults = [];
       let hasNextPage = true;
       let skip = 0;
 
@@ -28,6 +32,12 @@ function App() {
               account
               requestId
               modelId
+              transactionHash
+              input
+            }
+            aicallbackResults(first: 1000, orderBy: requestId, orderDirection: desc, skip: ${skip}) {
+              requestId
+              output
             }
           }`,
         };
@@ -45,11 +55,12 @@ function App() {
           );
 
           const responseData = await response.json();
-          const requests = responseData.data.aicallbackRequests;
-          allData = [...allData, ...requests];
+          const { aicallbackRequests, aicallbackResults } = responseData.data;
+          allRequests = [...allRequests, ...aicallbackRequests];
+          allResults = [...allResults, ...aicallbackResults];
           skip += 1000;
 
-          if (requests.length < 1000) {
+          if (aicallbackRequests.length < 1000) {
             hasNextPage = false;
           }
         } catch (error) {
@@ -58,19 +69,19 @@ function App() {
         }
       }
 
-      setData(allData);
+      setRequests(allRequests);
+      setResults(allResults);
 
-      // Count occurrences of modelID 50, 11, and accounts for Prompt and SimplePrompt
-      const llama2Count = allData.filter(
+      const llama2Count = allRequests.filter(
         (request) => request.modelId === llama2ModelId
       ).length;
-      const stableDiffusionCount = allData.filter(
+      const stableDiffusionCount = allRequests.filter(
         (request) => request.modelId === stableDiffusionModelId
       ).length;
-      const promptCount = allData.filter(
+      const promptCount = allRequests.filter(
         (request) => request.account === promptContract.toLocaleLowerCase()
       ).length;
-      const simplePromptCount = allData.filter(
+      const simplePromptCount = allRequests.filter(
         (request) =>
           request.account === simplePromptContract.toLocaleLowerCase()
       ).length;
@@ -80,12 +91,26 @@ function App() {
       setPromptCount(promptCount);
       setSimplePromptCount(simplePromptCount);
 
-      const totalCalls = allData.length;
+      const totalCalls = allRequests.length;
       const llama2Percentage = (llama2Count / totalCalls) * 100;
-      const stableDiffusionPercentage = (stableDiffusionCount / totalCalls) * 100;
+      const stableDiffusionPercentage =
+        (stableDiffusionCount / totalCalls) * 100;
 
       setLlama2Percentage(llama2Percentage);
       setStableDiffusionPercentage(stableDiffusionPercentage);
+
+      // Extract input and output pairs for the first three requests
+      const firstThreeInputOutputs = allRequests.slice(0, 3).map((request) => {
+        const result = allResults.find(
+          (result) => result.requestId === request.requestId
+        );
+        return {
+          requestId: request.requestId,
+          input: ethers.utils.toUtf8String(request.input),
+          output: result ? ethers.utils.toUtf8String(result.output) : null,
+        };
+      });
+      setInputOutputs(firstThreeInputOutputs);
     };
 
     fetchData();
@@ -93,20 +118,26 @@ function App() {
 
   return (
     <div>
-      <p>Total number of OAO requests: {data.length}</p>
-
+      <p>Total number of OAO requests: {requests.length}</p>
       <p>Llama2 Count: {llama2Count}</p>
       <p>Llama2 Percentage: {llama2Percentage.toFixed(2)}%</p>
-
       <p>Stable Diffusion Count: {stableDiffusionCount}</p>
       <p>
         Stable Diffusion Percentage: {stableDiffusionPercentage.toFixed(2)}%
-      </p>
-      <p>Integrated Contract Call Counts:</p>
+      </p>{" "}
       <p>Calls from prompt: {promptCount}</p>
       <p>Calls from Simple Prompt: {simplePromptCount}</p>
-
-      <pre>{JSON.stringify(data, null, 2)}</pre>
+      <p>Input and output of the latest 3 calls:</p>
+      <ul>
+        {inputOutputs.map((pair, index) => (
+          <li key={index}>
+            <p>Request ID: {pair.requestId}</p>
+            <p>Input: {pair.input}</p>
+            <p>Output: {pair.output}</p>
+          </li>
+        ))}
+      </ul>
+      <pre>{JSON.stringify({ requests, results }, null, 2)}</pre>
     </div>
   );
 }
