@@ -117,28 +117,31 @@ function App() {
   }, []);
 
   return (
-    <div>
-      <p>Total number of OAO requests: {requests.length}</p>
-      <p>Llama2 Count: {llama2Count}</p>
-      <p>Llama2 Percentage: {llama2Percentage.toFixed(2)}%</p>
-      <p>Stable Diffusion Count: {stableDiffusionCount}</p>
-      <p>
-        Stable Diffusion Percentage: {stableDiffusionPercentage.toFixed(2)}%
-      </p>{" "}
-      <p>Calls from prompt: {promptCount}</p>
-      <p>Calls from Simple Prompt: {simplePromptCount}</p>
-      <p>Input and output of the latest 3 calls:</p>
-      <ul>
-        {inputOutputs.map((pair, index) => (
-          <li key={index}>
-            <p>Request ID: {pair.requestId}</p>
-            <p>Input: {pair.input}</p>
-            <p>Output: {pair.output}</p>
-          </li>
-        ))}
-      </ul>
-      <pre>{JSON.stringify({ requests, results }, null, 2)}</pre>
-    </div>
+    <div style={{ fontFamily: 'Arial, sans-serif', padding: '20px', backgroundColor: '#f0f0f0', borderRadius: '8px', boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)' }}>
+  <h2>Summary</h2>
+  <p><strong style={{ color: 'red' }}>Total number of OAO requests:</strong> <span style={{ color: 'green' }}>{requests.length}</span></p>
+  <p><strong style={{ color: 'red' }}>Llama2 Count:</strong> <span style={{ color: 'green' }}>{llama2Count}</span></p>
+  <p><strong style={{ color: 'red' }}>Llama2 Percentage:</strong> <span style={{ color: 'green' }}>{llama2Percentage.toFixed(2)}%</span></p>
+  <p><strong style={{ color: 'red' }}>Stable Diffusion Count:</strong> <span style={{ color: 'green' }}>{stableDiffusionCount}</span></p>
+  <p><strong style={{ color: 'red' }}>Stable Diffusion Percentage:</strong> <span style={{ color: 'green' }}>{stableDiffusionPercentage.toFixed(2)}%</span></p>
+  <p><strong style={{ color: 'red' }}>Calls from Prompt:</strong> <span style={{ color: 'green' }}>{promptCount}</span></p>
+  <p><strong style={{ color: 'red' }}>Calls from Simple Prompt:</strong> <span style={{ color: 'green' }}>{simplePromptCount}</span></p>
+  
+  <h2>Input and Output of the Latest 3 Calls</h2>
+  <ul style={{ listStyleType: 'none', padding: '0' }}>
+    {inputOutputs.map((pair, index) => (
+      <li key={index} style={{ marginBottom: '20px', border: '1px solid #ccc', borderRadius: '4px', padding: '10px' }}>
+        <p style={{ marginBottom: '5px', color: 'red', fontWeight: 'bold' }}>Request ID: {pair.requestId}</p>
+        <p style={{ marginBottom: '5px', color: 'red' }}>Input: {pair.input}</p>
+        <p style={{ color: 'green' }}>Output: {pair.output}</p>
+      </li>
+    ))}
+  </ul>
+  
+  <h2>Indexed Information</h2>
+  <pre style={{ backgroundColor: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '20px', overflowX: 'auto' }}>{JSON.stringify({ requests, results }, null, 2)}</pre>
+</div>
+
   );
 }
 
