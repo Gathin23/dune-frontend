@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { ethers } from "ethers";
 
 function App() {
+  const [loading, setLoading] = useState(true);
   const [requests, setRequests] = useState([]);
   const [results, setResults] = useState([]);
   const [llama2Count, setLlama2Count] = useState(0);
@@ -187,11 +188,28 @@ function App() {
       }, 0);
       setTotalResultGas(totalResultGas);
 
+      setLoading(false);
+
     };
 
     fetchEthPriceInUSD();
     fetchData();
   }, []);
+
+  if (loading) {
+    return (
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh',
+        fontSize: '20px',
+        color: '#333'
+      }}>
+        Fetching the realtime data please wait around 10-15 seconds....
+      </div>
+    );
+  }
 
   return (
     <div
